@@ -1765,15 +1765,37 @@ Storage = {
 			Bag = 10037,
 			FireAxe = 10038
 		},
-		PoisonDaggers = {},
-		Ring = {},
-		ShamanTreasure = {},
-		StrongPotions = {},
-		TrollCave = {},
-		VampireShield = {},
-		WeddingRing = {},
+		PoisonDaggers = {
+			BackpackReward = 10039
+		},
+		Ring = {
+			TimeRing = 10040,
+			SwordRing = 10041
+		},
+		ShamanTreasure = {
+			Bag = 10042
+		},
+		StrongPotions = {
+			Reward = 10043
+		},
+		TrollCave = {
+			GarlicNecklace = 10044,
+			BrassLegs = 10045
+		},
+		VampireShield = {
+			Bag = 10046,
+			DragonLance = 10047,
+			VampireShield = 10048
+		},
+		WeddingRing = {
+			DragonNecklace = 10049,
+			WeedingRing = 10050
+		},
 		-- update 6.5
-		AlawarsVault = {},
+		AlawarsVault = {
+			WhitePearl = 10051,
+			Broadsword = 10052
+		},
 		-- update 7.1
 		BlackKnight = {},
 		DragonTower = {},
@@ -2075,7 +2097,8 @@ Storage = {
 		GraveDanger = {},
 		-- update 12.30
 		FeasterOfSouls = {},
-		PoltergeistOutfits = {}
+		PoltergeistOutfits = {},
+		Key4502 = 15000
 	}
 }
 

@@ -359,6 +359,81 @@ ChestUnique = {
 		itemReward = {{2432, 1}},
 		storage = Storage.Quest.FireAxe.FireAxe
 	},
+	-- Ring quest
+	-- Time ring
+	[6037] = {
+		itemId = 1738,
+		itemPos = {x = 33131, y = 31624, z = 15},
+		itemReward = {{2169, 1}},
+		storage = Storage.Quest.Ring.TimeRing
+	},
+	-- Sword ring
+	[6038] = {
+		itemId = 1738,
+		itemPos = {x = 33134, y = 31624, z = 15},
+		itemReward = {{2207, 1}},
+		storage = Storage.Quest.Ring.SwordRing
+	},
+	-- Troll cave quest
+	-- Garlic necklace
+	[6039] = {
+		itemId = 1741,
+		itemPos = {x = 33143, y = 31719, z = 10},
+		itemReward = {{2199, 150}},
+		storage = Storage.Quest.TrollCave.GarlicNecklace
+	},
+	-- Brass legs
+	[6040] = {
+		itemId = 1741,
+		itemPos = {x = 33143, y = 31721, z = 10},
+		itemReward = {{2478, 1}},
+		storage = Storage.Quest.TrollCave.BrassLegs
+	},
+	-- Vampire shield quest
+	-- Dragon lance
+	[6041] = {
+		itemId = 1738,
+		itemPos = {x = 33189, y = 31688, z = 14},
+		itemReward = {{2414, 1}},
+		storage = Storage.Quest.VampireShield.DragonLance
+	},
+	-- Dragon lance
+	[6042] = {
+		itemId = 1738,
+		itemPos = {x = 33195, y = 31688, z = 14},
+		itemReward = {{2534, 1}},
+		storage = Storage.Quest.VampireShield.VampireShield
+	},
+	-- Weeding ring quest
+	-- Dragon necklace
+	[6043] = {
+		itemId = 1738,
+		itemPos = {x = 33158, y = 31621, z = 15},
+		itemReward = {{2201, 200}},
+		storage = Storage.Quest.WeddingRing.DragonNecklace
+	},
+	-- Weeding ring
+	[6044] = {
+		itemId = 1738,
+		itemPos = {x = 33158, y = 31622, z = 15},
+		itemReward = {{2121, 1}},
+		storage = Storage.Quest.WeddingRing.WeedingRing
+	},
+	-- Alawars vault quest
+	-- White pearl
+	[6045] = {
+		itemId = 1740,
+		itemPos = {x = 32105, y = 31567, z = 9},
+		itemReward = {{2143, 3}},
+		storage = Storage.Quest.AlawarsVault.WhitePearl
+	},
+	-- Broadsword
+	[6046] = {
+		itemId = 1740,
+		itemPos = {x = 32109, y = 31567, z = 9},
+		itemReward = {{2413, 1}},
+		storage = Storage.Quest.AlawarsVault.Broadsword
+	},
 
 	-- Reward inside of container, there is also the option to put a key inside
 	-- If the table has a variable for key, (keyItem and keyAction) then it is inside the bag
@@ -418,6 +493,57 @@ ChestUnique = {
 		itemReward = {{2214, 1}, {2201, 200}, {2145, 7}},
 		weight = 27,
 		storage = Storage.Quest.FireAxe.Bag
+	},
+	-- Poison daggers quest
+	-- Backpack reward
+	[10007] = {
+		itemId = 1741,
+		itemPos = {x = 33155, y = 31880, z = 11},
+		itemBag = 1988,
+		itemReward = {{2545, 30}, {2411, 1}, {2411, 1}},
+		weight = 60,
+		storage = Storage.Quest.PoisonDaggers.BackpackReward
+	},
+	-- Shaman treasure quest
+	-- Bag with 3 blank runes
+	[10008] = {
+		itemId = 2843,
+		itemPos = {x = 33127, y = 31885, z = 9},
+		itemBag = 1987,
+		itemReward = {{2260, 3}},
+		weight = 15,
+		storage = Storage.Quest.ShamanTreasure.Bag
+	},
+	-- Strong potions quest
+	-- Green bag with 5 strong mana potions
+	[10009] = {
+		itemId = 1738,
+		itemPos = {x = 33163, y = 31603, z = 15},
+		itemBag = 1991,
+		itemReward = {{7589, 5}},
+		weight = 23,
+		storage = Storage.Quest.StrongPotions.Reward
+	},
+	-- Vampire shield quest
+	-- Bag
+	[10010] = {
+		itemId = 1738,
+		itemPos = {x = 33188, y = 31682, z = 14},
+		itemBag = 1987,
+		itemReward = {{2174, 1}, {2144, 1}, {2194, 1}},
+		weight = 16,
+		storage = Storage.Quest.VampireShield.Bag
+	},
+	-- Key 4502 quest
+	[10011] = {
+		itemId = 1740,
+		itemPos = {x = 32201, y = 31571, z = 10},
+		itemBag = 1987,
+		keyItem = 2089,
+		keyAction = 4502,
+		itemReward = {{2148, 23}, {2260, 1}, {2410, 4}, {2490, 1}},
+		weight = 80,
+		storage = Storage.Quest.Key4502
 	},
 
 	-- Reward of others scrips files (varied rewards)
