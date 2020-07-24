@@ -1797,9 +1797,20 @@ Storage = {
 			Broadsword = 10052
 		},
 		-- update 7.1
-		BlackKnight = {},
-		DragonTower = {},
-		TimeRing = {},
+		BlackKnight = {
+			Key5010 = 10053,
+			CrownArmor = 10054,
+			CrownShield = 10055
+		},
+		DragonTower = {
+			Backpack1 = 10056,
+			Backpack2 = 10057
+		},
+		TimeRing = {
+			CrystallBall = 10058,
+			TimeRing = 10059,
+			ElvenAmulet = 10060
+		},
 		-- update 7.2
 		Behemoth = {},
 		ParchmentRoom = {},
