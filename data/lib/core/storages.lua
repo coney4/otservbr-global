@@ -442,7 +442,8 @@ Storage = {
 	},
 	Grimvale = {
 		-- Reserved storage from 50380 - 50399
-		SilverVein = 50380
+		SilverVein = 50380,
+		WereHelmetEnchant = 50381
 	},
 	HeroRathleton = {
 		-- Reserved storage from 50400 - 50419
@@ -1813,7 +1814,12 @@ Storage = {
 			ElvenAmulet = 10060
 		},
 		-- update 7.2
-		Behemoth = {},
+		Behemoth = {
+			Bag = 10061,
+			GuardianHalberd = 10062,
+			DemonShield = 10063,
+			GoldenArmor = 10064
+		},
 		ParchmentRoom = {},
 		TheQueenOfTheBanshees = {},
 		-- update 7.24
