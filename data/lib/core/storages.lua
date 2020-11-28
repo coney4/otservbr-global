@@ -415,7 +415,13 @@ Storage = {
 		FacelessBaneTime = 50283,
 		Reward01 = 50284,
 		Reward02 = 50285,
-		Reward03 = 50286
+		Reward03 = 50286,
+		TatteredSwanFeathers = 50300,
+		TatteredSwanFeathers01 = 50301,
+		TatteredSwanFeathers02 = 50302,
+		TatteredSwanFeathers03 = 50303,
+		TatteredSwanFeathers04 = 50304,
+		TatteredSwanFeathers05 = 50305
 	},
 	FirstDragon = {
 		-- Reserved storage from 50350 - 50379
@@ -2134,7 +2140,9 @@ Storage = {
 		TheSecretLibrary = {},
 		-- update 12.00
 		DreamWarriorOutfits = {},
-		TheDreamCourts = {},
+		TheDreamCourts = {
+			AndrewDoor = 14900
+		},
 		-- update 12.02
 		TibiaAnniversary = {},
 		WinterlightSolstice = {},

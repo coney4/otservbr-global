@@ -306,10 +306,10 @@ void Map::moveCreature(Creature& creature, Tile& newTile, bool forceTeleport/* =
 
 void Map::getSpectatorsInternal(SpectatorHashSet& spectators, const Position& centerPos, int32_t minRangeX, int32_t maxRangeX, int32_t minRangeY, int32_t maxRangeY, int32_t minRangeZ, int32_t maxRangeZ, bool onlyPlayers) const
 {
-	int_fast16_t min_y = centerPos.y + minRangeY;
-	int_fast16_t min_x = centerPos.x + minRangeX;
-	int_fast16_t max_y = centerPos.y + maxRangeY;
-	int_fast16_t max_x = centerPos.x + maxRangeX;
+	int_fast32_t min_y = centerPos.y + minRangeY;
+	int_fast32_t min_x = centerPos.x + minRangeX;
+	int_fast32_t max_y = centerPos.y + maxRangeY;
+	int_fast32_t max_x = centerPos.x + maxRangeX;
 
 	int32_t minoffset = centerPos.getZ() - maxRangeZ;
 	uint16_t x1 = std::min<uint32_t>(0xFFFF, std::max<int32_t>(0, (min_x + minoffset)));
@@ -949,61 +949,33 @@ void QTreeLeafNode::removeCreature(Creature* c)
 uint32_t Map::clean() const
 {
 	uint64_t start = OTSYS_TIME();
-	size_t count = 0, tiles = 0;
+	size_t tiles = 0;
 
 	if (g_game.getGameState() == GAME_STATE_NORMAL) {
 		g_game.setGameState(GAME_STATE_MAINTAIN);
 	}
 
-	std::vector<const QTreeNode*> nodes {
-		&root
-	};
 	std::vector<Item*> toRemove;
-	do {
-		const QTreeNode* node = nodes.back();
-		nodes.pop_back();
-		if (node->isLeaf()) {
-			const QTreeLeafNode* leafNode = static_cast<const QTreeLeafNode*>(node);
-			for (uint8_t z = 0; z < MAP_MAX_LAYERS; ++z) {
-				Floor* floor = leafNode->getFloor(z);
-				if (!floor) {
-					continue;
+	for (auto tile : g_game.getTilesToClean()) {
+    if (!tile) {
+      continue;
+    }
+    if (auto items = tile->getItemList()) {
+      ++tiles;
+      for (auto item : *items) {
+				if (item->isCleanable()) {
+					toRemove.emplace_back(item);
 				}
-
-				for (auto& row : floor->tiles) {
-					for (auto tile : row) {
-						if (!tile || tile->hasFlag(TILESTATE_PROTECTIONZONE)) {
-							continue;
-						}
-
-						TileItemVector* itemList = tile->getItemList();
-						if (!itemList) {
-							continue;
-						}
-
-						++tiles;
-						for (Item* item : *itemList) {
-							if (item->isCleanable()) {
-								toRemove.push_back(item);
-							}
-						}
-
-						for (Item* item : toRemove) {
-							g_game.internalRemoveItem(item, -1);
-						}
-						count += toRemove.size();
-						toRemove.clear();
-					}
-				}
-			}
-		} else {
-			for (auto childNode : node->child) {
-				if (childNode) {
-					nodes.push_back(childNode);
-				}
-			}
+      }
 		}
-	} while (!nodes.empty());
+	}
+
+  for (auto item : toRemove) {
+		g_game.internalRemoveItem(item, -1);
+	}
+
+	size_t count = toRemove.size();
+	g_game.clearTilesToClean();
 
 	if (g_game.getGameState() == GAME_STATE_MAINTAIN) {
 		g_game.setGameState(GAME_STATE_NORMAL);
