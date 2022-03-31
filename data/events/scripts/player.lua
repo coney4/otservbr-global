@@ -182,20 +182,6 @@ function Player:onLook(thing, position, distance)
 				description = string.format("%s, Unique ID: %d", description, uniqueId)
 			end
 
-			if thing:isContainer() then
-				local quickLootCategories = {}
-				local container = Container(thing.uid)
-				for categoryId = LOOT_START, LOOT_END do
-					if container ~= nil then
-						if container:hasQuickLootCategory(categoryId) then
-							table.insert(quickLootCategories, categoryId)
-						end
-					end
-				end
-
-				description = string.format("%s, QuickLootCategory: (%s)", description, table.concat(quickLootCategories, ", "))
-			end
-
 			local itemType = thing:getType()
 
 			local transformEquipId = itemType:getTransformEquipId()
@@ -412,7 +398,7 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 
 	local containerTo = self:getContainerById(toPosition.y-64)
 	if (containerTo) then
-		if (containerTo:getId() == ITEM_STORE_INBOX) then
+		if (containerTo:getId() == ITEM_STORE_INBOX) or (containerTo:getParent():isContainer() and containerTo:getParent():getId() == ITEM_STORE_INBOX and containerTo:getId() ~= ITEM_GOLD_POUCH) then
 			self:sendCancelMessage(RETURNVALUE_CONTAINERNOTENOUGHROOM)
 			return false
 		end
@@ -436,16 +422,6 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 
 	-- Handle move items to the ground
 	if toPosition.x ~= CONTAINER_POSITION then
-		if item:isContainer() then
-			local container = Container(item.uid)
-			for categoryId = LOOT_START, LOOT_END do
-				if container:hasQuickLootCategory(categoryId) then
-					container:removeQuickLootCategory(categoryId)
-					self:setQuickLootBackpack(categoryId, nil)
-				end
-			end
-		end
-
 		return true
 	end
 
@@ -766,6 +742,10 @@ function Player:onGainExperience(source, exp, rawExp)
 		exp = exp * 2
 	end
 
+	-- Event scheduler
+	if SCHEDULE_EXP_RATE ~= 100 then
+		exp = (exp * SCHEDULE_EXP_RATE)/100
+	end
 	self:setBaseXpGain(displayRate * 100)
 	return exp
 end
@@ -779,10 +759,19 @@ function Player:onGainSkillTries(skill, tries)
 		return tries
 	end
 
-	if skill == SKILL_MAGLEVEL then
-		return tries * configManager.getNumber(configKeys.RATE_MAGIC)
+	-- Event scheduler skill rate
+	if SCHEDULE_SKILL_RATE ~= 100 then
+		tries = (tries * SCHEDULE_SKILL_RATE)/100
 	end
-	return tries * configManager.getNumber(configKeys.RATE_SKILL)
+
+	local skillRate = configManager.getNumber(configKeys.RATE_SKILL)
+	local magicRate = configManager.getNumber(configKeys.RATE_MAGIC)
+
+	if(skill == SKILL_MAGLEVEL) then -- Magic getLevel
+		return tries * getRateFromTable(magicLevelStages, self:getMagicLevel(), magicRate)
+	end
+
+	return tries * getRateFromTable(skillsStages, self:getEffectiveSkillLevel(skill), skillRate)
 end
 
 function Player:onRemoveCount(item)
@@ -837,6 +826,15 @@ function Player:canBeAppliedImbuement(imbuement, item)
 end
 
 function Player:onApplyImbuement(imbuement, item, slot, protectionCharm)
+	for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
+    	local slotItem = self:getSlotItem(slot)
+   		if slotItem and slotItem == item then
+			self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ROLL_FAILED, "You can't imbue a equipped item.")
+			self:closeImbuementWindow()
+            return true
+   		end
+	end
+
 	for _, pid in pairs(imbuement:getItems()) do
 		if self:getItemCount(pid.itemid) < pid.count then
 			self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ROLL_FAILED, "You don't have all necessary items.")

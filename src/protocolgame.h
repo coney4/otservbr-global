@@ -73,6 +73,8 @@ class ProtocolGame final : public Protocol
 		void AddItem(NetworkMessage& msg, const Item* item);
 		void AddItem(NetworkMessage& msg, uint16_t id, uint8_t count);
 
+		void sendLockerItems(std::map<uint16_t, uint16_t> itemMap, uint16_t count);
+
 		uint16_t getVersion() const {
 			return version;
 		}
@@ -104,11 +106,28 @@ class ProtocolGame final : public Protocol
 		void parseSay(NetworkMessage& msg);
 		void parseLookAt(NetworkMessage& msg);
 		void parseLookInBattleList(NetworkMessage& msg);
+
+		void parseQuickLoot(NetworkMessage& msg);
+		void parseLootContainer(NetworkMessage& msg);
+		void parseQuickLootBlackWhitelist(NetworkMessage& msg);
+		void parseRequestLockItems();
+
 		void parseFightModes(NetworkMessage& msg);
 		void parseAttack(NetworkMessage& msg);
 		void parseFollow(NetworkMessage& msg);
 
-		void parseBugReport(NetworkMessage& msg);
+    void sendItemInspection(uint16_t itemId, uint8_t itemCount, const Item* item, bool cyclopedia);
+    void parseInspectionObject(NetworkMessage& msg);
+
+    void parseCyclopediaCharacterInfo(NetworkMessage& msg);
+
+    void parseHighscores(NetworkMessage& msg);
+	  void sendHighscoresNoData();
+	  void sendHighscores(const std::vector<HighscoreCharacter>& characters, uint8_t categoryId, uint32_t vocationId, uint16_t page, uint16_t pages);
+
+    void parseTournamentLeaderboard(NetworkMessage& msg);
+
+    void parseBugReport(NetworkMessage& msg);
 		void parseDebugAssert(NetworkMessage& msg);
 		void parseRuleViolationReport(NetworkMessage &msg);
 
@@ -200,6 +219,7 @@ class ProtocolGame final : public Protocol
 
 		void sendDistanceShoot(const Position& from, const Position& to, uint8_t type);
 		void sendMagicEffect(const Position& pos, uint8_t type);
+		void sendRestingStatus(uint8_t protection);		
 		void sendCreatureHealth(const Creature* creature);
 		void sendSkills();
 		void sendPing();
@@ -228,6 +248,22 @@ class ProtocolGame final : public Protocol
 
 		void sendTutorial(uint8_t tutorialId);
 		void sendAddMarker(const Position& pos, uint8_t markType, const std::string& desc);
+    
+    void sendTournamentLeaderboard();
+
+    void sendCyclopediaCharacterNoData(CyclopediaCharacterInfoType_t characterInfoType, uint8_t errorCode);
+		void sendCyclopediaCharacterBaseInformation();
+		void sendCyclopediaCharacterGeneralStats();
+		void sendCyclopediaCharacterCombatStats();
+		void sendCyclopediaCharacterRecentDeaths(uint16_t page, uint16_t pages, const std::vector<RecentDeathEntry>& entries);
+		void sendCyclopediaCharacterRecentPvPKills(uint16_t page, uint16_t pages, const std::vector<RecentPvPKillEntry>& entries);
+		void sendCyclopediaCharacterAchievements();
+		void sendCyclopediaCharacterItemSummary();
+		void sendCyclopediaCharacterOutfitsMounts();
+		void sendCyclopediaCharacterStoreSummary();
+		void sendCyclopediaCharacterInspection();
+		void sendCyclopediaCharacterBadges();
+		void sendCyclopediaCharacterTitles();
 
 		void sendCreatureWalkthrough(const Creature* creature, bool walkthrough);
 		void sendCreatureShield(const Creature* creature);
@@ -240,7 +276,7 @@ class ProtocolGame final : public Protocol
 		void sendGameNews();
 		void sendResourcesBalance(uint64_t money = 0, uint64_t bank = 0, uint64_t prey = 0);
 		void sendResourceBalance(Resource_t resourceType, uint64_t value);
-		void sendSaleItemList(const std::vector<ShopInfo>& shop);
+    void sendSaleItemList(const std::vector<ShopInfo>& shop, const std::map<uint32_t, uint32_t>& inventoryMap);
 		void sendMarketEnter(uint32_t depotId);
 		void updateCoinBalance();
 		void sendMarketLeave();
@@ -305,6 +341,10 @@ class ProtocolGame final : public Protocol
 		void sendContainer(uint8_t cid, const Container* container, bool hasParent, uint16_t firstIndex);
 		void sendCloseContainer(uint8_t cid);
 
+		//quickloot
+		void sendLootContainers();
+		void sendLootStats(Item* item);
+
 		//inventory
 		void sendInventoryItem(slots_t slot, const Item* item);
 		void sendInventoryClientIds();
@@ -317,6 +357,9 @@ class ProtocolGame final : public Protocol
 		void sendUpdateSupplyTracker(const Item* item);
 		void sendUpdateImpactTracker(int32_t quantity, bool isHeal);
 		void sendUpdateLootTracker(Item* item);
+		
+		// Hotkey equip/dequip item
+		void parseHotkeyEquip(NetworkMessage& msg);
 
 		//Help functions
 
@@ -385,6 +428,11 @@ class ProtocolGame final : public Protocol
 		bool shouldAddExivaRestrictions = false;
 
 		void sendInventory();
+
+		void sendOpenStash();
+		void AddPlayerStowedItems(NetworkMessage& msg);
+		void parseStashWithdraw(NetworkMessage& msg);
+		void sendSpecialContainersAvailable(bool supplyStashAvailable);
 };
 
 #endif

@@ -454,10 +454,21 @@ ReturnValue Actions::internalUseItem(Player* player, const Position& pos, uint8_
 
 bool Actions::useItem(Player* player, const Position& pos, uint8_t index, Item* item, bool isHotkey)
 {
-	player->setNextAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::ACTIONS_DELAY_INTERVAL));
+	const ItemType& it = Item::items[item->getID()];
+	if (it.isRune() || it.type == ITEM_TYPE_POTION) {
+		if (player->walkExhausted()) {
+			player->sendCancelMessage(RETURNVALUE_YOUAREEXHAUSTED);
+			return false;
+		}
+
+		player->setNextPotionAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::ACTIONS_DELAY_INTERVAL));
+	} else {
+		player->setNextAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::ACTIONS_DELAY_INTERVAL));
+	}
 
 	if (isHotkey) {
-		showUseHotkeyMessage(player, item, player->getItemTypeCount(item->getID(), -1));
+		uint16_t subType = item->getSubType();
+		showUseHotkeyMessage(player, item, player->getItemTypeCount(item->getID(), subType != item->getItemCount() ? subType : -1));
 	}
 
 	ReturnValue ret = internalUseItem(player, pos, index, item, isHotkey);
@@ -471,7 +482,16 @@ bool Actions::useItem(Player* player, const Position& pos, uint8_t index, Item* 
 bool Actions::useItemEx(Player* player, const Position& fromPos, const Position& toPos,
                         uint8_t toStackPos, Item* item, bool isHotkey, Creature* creature/* = nullptr*/)
 {
-	player->setNextAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::EX_ACTIONS_DELAY_INTERVAL));
+	const ItemType& it = Item::items[item->getID()];
+	if (it.isRune() || it.type == ITEM_TYPE_POTION) {
+		if (player->walkExhausted()) {
+			player->sendCancelMessage(RETURNVALUE_YOUAREEXHAUSTED);
+			return false;
+		}
+		player->setNextPotionAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::EX_ACTIONS_DELAY_INTERVAL));
+	} else {
+		player->setNextAction(OTSYS_TIME() + g_config.getNumber(ConfigManager::EX_ACTIONS_DELAY_INTERVAL));
+	}
 
 	Action* action = getAction(item);
 	if (action == nullptr) {
@@ -486,7 +506,8 @@ bool Actions::useItemEx(Player* player, const Position& fromPos, const Position&
 	}
 
 	if (isHotkey) {
-		showUseHotkeyMessage(player, item, player->getItemTypeCount(item->getID(), -1));
+		uint16_t subType = item->getSubType();
+		showUseHotkeyMessage(player, item, player->getItemTypeCount(item->getID(), subType != item->getItemCount() ? subType : -1));
 	}
 
 	if (action->function) {
@@ -543,70 +564,6 @@ bool Action::configureEvent(const pugi::xml_node& node)
 	return true;
 }
 
-namespace {
-
-bool enterMarket(Player* player, Item*, const Position&, Thing*,
-														const Position&, bool) {
-	if (player->getLastDepotId() == -1) {
-		return false;
-	}
-
-	player->sendMarketEnter(player->getLastDepotId());
-	return true;
-}
-
-bool useImbueShrine(Player* player, Item*, const Position&, Thing* target,
-												const Position& toPos, bool) {
-	Item* item = target != nullptr ? target->getItem() : nullptr;
-	if (item == nullptr) {
-		player->sendTextMessage(MESSAGE_STATUS_SMALL, "This item is not imbuable.");
-		return false;
-	}
-
-	const ItemType& it = Item::items[item->getID()];
-	if(it.imbuingSlots <= 0 ) {
-		player->sendTextMessage(MESSAGE_STATUS_SMALL, "This item is not imbuable.");
-		return false;
-	}
-
-	if (item->getTopParent() != player) {
-		player->sendTextMessage(MESSAGE_STATUS_SMALL, "You have to pick up the item to imbue it.");
-		return false;
-	}
-
-	if ((toPos.y & 0x40) == 0) {
-    player->sendTextMessage(MESSAGE_STATUS_SMALL,
-            "You cannot imbue an equipped item.");
-		return false;
-	}
-
-	player->sendImbuementWindow(target->getItem());
-	return true;
-}
-
-}  // namespace
-
-bool Action::loadFunction(const pugi::xml_attribute& attr, bool isScripted)
-{
-	const char* functionName = attr.as_string();
-	if (strcasecmp(functionName, "market") == 0) {
-		function = enterMarket;
-	} else if (strcasecmp(functionName, "imbuement") == 0) {
-		function = useImbueShrine;
-	} else {
-		if (!isScripted) {
-			std::cout << "[Warning - Action::loadFunction] Function \""
-						<< functionName << "\" does not exist." << std::endl;
-			return false;
-		}
-	}
-
-	if (!isScripted) {
-		scripted = false;
-	}
-	return true;
-}
-
 std::string Action::getScriptEventName() const
 {
 	return "onUse";
@@ -634,7 +591,13 @@ bool Action::executeUse(Player* player, Item* item, const Position& fromPosition
 {
 	//onUse(player, item, fromPosition, target, toPosition, isHotkey)
 	if (!scriptInterface->reserveScriptEnv()) {
-		std::cout << "[Error - Action::executeUse] Call stack overflow" << std::endl;
+		std::cout << "[Error - Action::executeUse"
+				<< " Player "
+				<< player->getName()
+				<< " on item "
+				<< item->getName()
+				<< "] Call stack overflow. Too many lua script calls being nested."
+				<< std::endl;
 		return false;
 	}
 

@@ -9,8 +9,9 @@ Level 100 = 1100
 
 Chest (action) = 5000/15000
 Chest (unique) = 5000/15000
-Keys = 5000/6000
-Reward without a container 6001/8000
+Reward keys = 5000/6000
+Reward chest 6001/12000
+Custom chests 12001/15000
 
 TeleportItem (action) = 15001/20000 (this is teleport items, not magic forcefield)
 TeleportItem (unique) = 15001/20000 (this is teleport items, not magic forcefield)
@@ -53,6 +54,7 @@ Action IDS
 	[102] = down floor action
 	[103] = key 0010
 	[103-120] = keys action
+	[104] = Parchment of the parchment room quest
 	[303] = key 0303
 	[1000] = level door. Here 1 must be used followed by the level. Example: 1010 = level 10, 1100 = level 100]
 	[3001-3008] = key 3001/3008
