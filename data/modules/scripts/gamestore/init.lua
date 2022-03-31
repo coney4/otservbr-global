@@ -411,7 +411,7 @@ function parseBuyStoreOffer(playerId, msg)
 
 	if not pcallError.code then -- unhandled error
 		-- log some debugging info
-		print(string.format("Gamestore: Purchase failed due to an unhandled script error. \n\tStacktrace: %s\n", pcallError))
+		Spdlog.warn("[parseBuyStoreOffer] - Purchase failed due to an unhandled script error. Stacktrace: ".. pcallError)
 	end
 
 		return queueSendStoreAlertToUser(alertMessage, 500, playerId)
@@ -592,7 +592,7 @@ function Player.canBuyOffer(self, offer)
 				disabledReason = "You already have maximum of prey wildcards."
 			end
 		elseif offer.type == GameStore.OfferTypes.OFFER_TYPE_CHARMS then
-			if self:getStorageValue(Bestiary.Storage.PLAYER_CHARM_SLOT_EXPANSION) == 1 then
+			if self:charmExpansion() then
 				disabled = 1
 				disabledReason = "You already have charm expansion."
 			end
@@ -1247,6 +1247,7 @@ function GameStore.processItemPurchase(player, offerId, offerCount)
 		return error({ code = 0, message = "Please make sure you have free slots in your store inbox."})
 	end
 end
+
 function GameStore.processChargesPurchase(player, itemtype, name, charges)
 	if player:getFreeCapacity() < ItemType(itemtype):getWeight(1) then
 		return error({ code = 0, message = "Please make sure you have free capacity to hold this item."})
@@ -1283,7 +1284,7 @@ function GameStore.processInstantRewardAccess(player, offerCount)
 end
 
 function GameStore.processCharmsPurchase(player)
-	player:setCharmRuneSlotExpansion(true)
+	player:charmExpansion(true)
 end
 
 function GameStore.processPremiumPurchase(player, offerId)

@@ -1,7 +1,7 @@
 DailyRewardSystem = {
 	Developer = "Westwol, Marcosvf132",
-	Version = "1.2",
-	lastUpdate = "26/09/2020 - 02:00",
+	Version = "1.3",
+	lastUpdate = "12/10/2020 - 20:30",
 	ToDo = "Move this system to CPP"
 }
 
@@ -19,6 +19,8 @@ local ClientPackets = {
 	OpenRewardWall = 0xD8,
 	OpenRewardHistory = 0xD9,
 	SelectReward = 0xDA,
+	CollectionResource = 0x14,
+	JokerResource = 0x15
 }
 
 --[[-- Constants
@@ -61,10 +63,10 @@ local DAILY_REWARD_STATUS_PREMIUM = 1
 
 local DailyRewardItems = {
 	[0] = {7618, 7620}, -- God/no vocation character
-	[VOCATION.CLIENT_ID.PALADIN] = {7618, 7588, 7620, 7589, 8472, 26030, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
-	[VOCATION.CLIENT_ID.DRUID] = {7618, 7620, 7589, 7590, 26029, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2269, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
-	[VOCATION.CLIENT_ID.SORCERER] = {7618, 7620, 7589, 7590, 26029, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
-	[VOCATION.CLIENT_ID.KNIGHT] = {7618, 7588, 7591, 8473, 26031, 7620, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
+	[VOCATION.BASE_ID.PALADIN] = {7618, 7588, 7620, 7589, 8472, 26030, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
+	[VOCATION.BASE_ID.DRUID] = {7618, 7620, 7589, 7590, 26029, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2269, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
+	[VOCATION.BASE_ID.SORCERER] = {7618, 7620, 7589, 7590, 26029, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
+	[VOCATION.BASE_ID.KNIGHT] = {7618, 7588, 7591, 8473, 26031, 7620, 2316, 2274, 2291, 2266, 2310, 2262, 2277, 2313, 2305, 2301, 2303, 2302, 2304, 2271, 2265, 2293, 2286, 2289, 2308, 2288, 2268, 2315},
 }
 
 DailyReward = {
@@ -78,10 +80,12 @@ DailyReward = {
 		nextRewardTime = 14899,
 		collectionTokens = 14901,
 		staminaBonus = 14902,
+		jokerTokens = 14903,
 		-- Global
 		lastServerSave = 14110,
 		avoidDouble = 13412,
-		notifyReset = 13413
+		notifyReset = 13413,
+		avoidDoubleJoker = 13414
 	},
 
 	strikeBonuses = {
@@ -239,10 +243,11 @@ DailyReward.loadDailyReward = function(playerId, source)
 		source = REWARD_FROM_PANEL
 	end
 
-	player:sendCollectionResource(player:getCollectionTokens())
+	player:sendCollectionResource(ClientPackets.JokerResource, player:getJokerTokens())
+	player:sendCollectionResource(ClientPackets.CollectionResource, player:getCollectionTokens())
 	player:sendDailyReward()
 	player:sendOpenRewardWall(source)
-	player:sendDailyRewardCollectionState(0)
+	player:sendDailyRewardCollectionState(DailyReward.isRewardTaken(player:getId()) and DAILY_REWARD_COLLECTED or DAILY_REWARD_NOTCOLLECTED)
 	return true
 end
 
@@ -262,6 +267,7 @@ DailyReward.pickedReward = function(playerId)
 
 	player:setStreakLevel(player:getStreakLevel() + 1)
 	player:setStorageValue(DailyReward.storages.avoidDouble, Game.getLastServerSave())
+	player:setDailyReward(DAILY_REWARD_COLLECTED)
 	player:setNextRewardTime(Game.getLastServerSave() + DailyReward.serverTimeThreshold)
 	player:getPosition():sendMagicEffect(CONST_ME_FIREWORK_YELLOW)
 	return true
@@ -277,7 +283,7 @@ end
 
 function Player.iterateTest(self)
 	local dailyTable = DailyReward.rewards[5]
-	local reward = DailyRewardItems[self:getVocation():getClientId()]
+	local reward = DailyRewardItems[self:getVocation():getBaseId()]
 
 	if not(reward) then
 		reward = {}
@@ -308,20 +314,37 @@ DailyReward.init = function(playerId)
 	if not player then
 		return false
 	end
+
+	if player:getJokerTokens() < 3 and tonumber(os.date("%m")) ~= player:getStorageValue(DailyReward.storages.avoidDoubleJoker) then
+		player:setStorageValue(DailyReward.storages.avoidDoubleJoker, tonumber(os.date("%m")))
+		player:setJokerTokens(player:getJokerTokens() + 1)
+	end
+
+	local timeMath = Game.getLastServerSave() - player:getNextRewardTime()
 	if player:getNextRewardTime() < Game.getLastServerSave() then
 		if player:getStorageValue(DailyReward.storages.notifyReset) ~= Game.getLastServerSave() then
-			player:setStreakLevel(0)
 			player:setStorageValue(DailyReward.storages.notifyReset, Game.getLastServerSave())
-			if player:getLastLoginSaved() > 0 then -- message wont appear at first character login
-				player:sendTextMessage(MESSAGE_EVENT_ADVANCE, "You just lost your daily reward streak.")
+			timeMath = math.ceil(timeMath/(DailyReward.serverTimeThreshold))
+			if player:getJokerTokens() >= timeMath then
+				player:setJokerTokens(player:getJokerTokens() - timeMath)
+				player:sendTextMessage(MESSAGE_LOGIN, "You lost " .. timeMath .. " joker tokens to prevent loosing your streak.")
+			else
+				player:setStreakLevel(0)
+				if player:getLastLoginSaved() > 0 then -- message wont appear at first character login
+					player:setJokerTokens(-(player:getJokerTokens()))
+					player:sendTextMessage(MESSAGE_LOGIN, "You just lost your daily reward streak.")
+				end
 			end
 		end
 	end
+
 	-- Daily reward golden icon
 	if DailyReward.isRewardTaken(player:getId()) then
-		player:sendDailyRewardCollectionState(0)
+		player:sendDailyRewardCollectionState(DAILY_REWARD_COLLECTED)
+		player:setDailyReward(DAILY_REWARD_COLLECTED)
 	else
-		player:sendDailyRewardCollectionState(1)
+		player:sendDailyRewardCollectionState(DAILY_REWARD_NOTCOLLECTED)
+		player:setDailyReward(DAILY_REWARD_NOTCOLLECTED)
 	end
 	player:loadDailyRewardBonuses()
 end
@@ -349,21 +372,27 @@ function Player.sendOpenRewardWall(self, shrine)
 	if DailyReward.isRewardTaken(self:getId()) then -- state (player already took reward? but just make sure noone wpe)
 		msg:addByte(1)
 		msg:addString("Sorry, you have already taken your daily reward or you are unable to collect it.") -- Unknown message
-		msg:addU32(0) --timeLeft to pickUp reward without loosing streak
+		if self:getJokerTokens() > 0 then
+			msg:addByte(1)
+			msg:addU16(self:getJokerTokens())
+		else
+			msg:addByte(0)
+		end
 	else
 		msg:addByte(0)
+		msg:addByte(2)
 		msg:addU32(Game.getLastServerSave() + DailyReward.serverTimeThreshold) --timeLeft to pickUp reward without loosing streak
+		msg:addU16(self:getJokerTokens())
 	end
 	msg:addU16(self:getStreakLevel()) -- day strike
-	msg:addU16(24) -- unknown
 	msg:sendToPlayer(self)
 end
 
-function Player.sendCollectionResource(self, value)
+function Player.sendCollectionResource(self, byte, value)
 	-- TODO: Migrate to protocolgame.cpp
 	local msg = NetworkMessage()
 	msg:addByte(0xEE) -- resource byte
-	msg:addByte(0x14)
+	msg:addByte(byte)
 	msg:addU64(value)
 	msg:sendToPlayer(self)
 end
@@ -543,10 +572,10 @@ function Player.readDailyReward(self, msg, currentDay, state)
 	else
 		if systemType == 1 then
 			if (state == DAILY_REWARD_STATUS_FREE) then
-				rewards = DailyRewardItems[self:getVocation():getClientId()]
+				rewards = DailyRewardItems[self:getVocation():getBaseId()]
 				itemsToPick = dailyTable.freeAccount
 			else
-				rewards = DailyRewardItems[self:getVocation():getClientId()]
+				rewards = DailyRewardItems[self:getVocation():getBaseId()]
 				itemsToPick = dailyTable.premiumAccount
 			end
 

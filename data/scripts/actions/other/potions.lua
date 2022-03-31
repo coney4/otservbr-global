@@ -26,15 +26,23 @@ local exhaust = Condition(CONDITION_EXHAUST_HEAL)
 exhaust:setParameter(CONDITION_PARAM_TICKS, (configManager.getNumber(configKeys.EX_ACTIONS_DELAY_INTERVAL) - 1000))
 -- 1000 - 100 due to exact condition timing. -100 doesn't hurt us, and players don't have reminding ~50ms exhaustion.
 
+local function magicshield(player)
+local condition = Condition(CONDITION_MANASHIELD)
+condition:setParameter(CONDITION_PARAM_TICKS, 60000)
+condition:setParameter(CONDITION_PARAM_MANASHIELD, math.min(player:getMaxMana(), 300 + 7.6 * player:getLevel() + 7 * player:getMagicLevel()))
+player:addCondition(condition)
+end
+
 local potions = {
 	[6558] = {
 		transform = {
-		id = {7588, 7589}},
+			id = {7588, 7589}
+		},
 		effect = CONST_ME_DRAWBLOOD
 	},
 	[7439] = {
 		vocations = {
-			VOCATION.CLIENT_ID.KNIGHT
+			VOCATION.BASE_ID.KNIGHT
 		},
 		condition = berserk,
 		effect = CONST_ME_MAGIC_RED,
@@ -43,8 +51,8 @@ local potions = {
 	},
 	[7440] = {
 		vocations = {
-			VOCATION.CLIENT_ID.SORCERER,
-			VOCATION.CLIENT_ID.DRUID
+			VOCATION.BASE_ID.SORCERER,
+			VOCATION.BASE_ID.DRUID
 		},
 		condition = mastermind,
 		effect = CONST_ME_MAGIC_BLUE,
@@ -53,12 +61,22 @@ local potions = {
 	},
 	[7443] = {
 		vocations = {
-			VOCATION.CLIENT_ID.PALADIN
+			VOCATION.BASE_ID.PALADIN
 		},
 		condition = bullseye,
 		effect = CONST_ME_MAGIC_GREEN,
 		description = "Only paladins may drink this potion.",
 		text = "You feel more accurate."
+	},
+	[40398] = {
+		vocations = {
+			VOCATION.BASE_ID.SORCERER,
+			VOCATION.BASE_ID.DRUID
+		},
+		level = 14,
+		func = magicshield,
+		effect = CONST_ME_ENERGYAREA,
+		description = "Only sorcerers and druids of level 14 or above may drink this potion.",
 	},
 	[7588] = {
 		health = {
@@ -66,8 +84,8 @@ local potions = {
 			350
 		},
 		vocations = {
-			VOCATION.CLIENT_ID.PALADIN,
-			VOCATION.CLIENT_ID.KNIGHT
+			VOCATION.BASE_ID.PALADIN,
+			VOCATION.BASE_ID.KNIGHT
 		},
 		level = 50,
 		flask = 7634,
@@ -78,14 +96,9 @@ local potions = {
 			115,
 			185
 		},
-		vocations = {
-			VOCATION.CLIENT_ID.SORCERER,
-			VOCATION.CLIENT_ID.DRUID,
-			VOCATION.CLIENT_ID.PALADIN
-		},
 		level = 50,
 		flask = 7634,
-		description = "Only sorcerers, druids and paladins of level 50 or above may drink this fluid."
+		description = "Only players of level 50 or above may drink this fluid."
 	},
 	[7590] = {
 		mana = {
@@ -93,12 +106,13 @@ local potions = {
 			250
 		},
 		vocations = {
-			VOCATION.CLIENT_ID.SORCERER,
-			VOCATION.CLIENT_ID.DRUID
+			VOCATION.BASE_ID.SORCERER,
+			VOCATION.BASE_ID.DRUID,
+			VOCATION.BASE_ID.PALADIN
 		},
 		level = 80,
 		flask = 7635,
-		description = "Only druids and sorcerers of level 80 or above may drink this fluid."
+		description = "Only sorcerers, druids and paladins of level 80 or above may drink this fluid."
 	},
 	[7591] = {
 		health = {
@@ -106,7 +120,7 @@ local potions = {
 			575
 		},
 		vocations = {
-			VOCATION.CLIENT_ID.KNIGHT
+			VOCATION.BASE_ID.KNIGHT
 		},
 		level = 80,
 		flask = 7635,
@@ -136,7 +150,7 @@ local potions = {
 			200
 		},
 		vocations = {
-			VOCATION.CLIENT_ID.PALADIN
+			VOCATION.BASE_ID.PALADIN
 		},
 		level = 80,
 		flask = 7635,
@@ -145,7 +159,7 @@ local potions = {
 	[8473] = {
 		health = {650, 850},
 		vocations = {
-			VOCATION.CLIENT_ID.KNIGHT
+			VOCATION.BASE_ID.KNIGHT
 		},
 		level = 130,
 		flask = 7635,
@@ -168,8 +182,8 @@ local potions = {
 			575
 		},
 		vocations = {
-			VOCATION.CLIENT_ID.SORCERER,
-			VOCATION.CLIENT_ID.DRUID
+			VOCATION.BASE_ID.SORCERER,
+			VOCATION.BASE_ID.DRUID
 		},
 		level = 130,
 		flask = 7635,
@@ -185,7 +199,7 @@ local potions = {
 			350
 		},
 		vocations = {
-			VOCATION.CLIENT_ID.PALADIN
+			VOCATION.BASE_ID.PALADIN
 		},
 		level = 130,
 		flask = 7635,
@@ -197,7 +211,7 @@ local potions = {
 			1125
 		},
 		vocations = {
-			VOCATION.CLIENT_ID.KNIGHT
+			VOCATION.BASE_ID.KNIGHT
 		},
 		level = 200,
 		flask = 7635,
@@ -217,18 +231,18 @@ function flaskPotion.onUse(player, item, fromPosition, target, toPosition, isHot
 		playerDelayPotion[player:getId()] = 0
 	end
 	if playerDelayPotion[player:getId()] > os.mtime() then
-		player:sendTextMessage(MESSAGE_STATUS_SMALL, Game.getReturnMessage(RETURNVALUE_YOUAREEXHAUSTED))
+		player:sendTextMessage(MESSAGE_FAILURE, Game.getReturnMessage(RETURNVALUE_YOUAREEXHAUSTED))
 		return true
 	end
 
 	local potion = potions[item:getId()]
-	if potion.level and player:getLevel() < potion.level or potion.vocations and not table.contains(potion.vocations, player:getVocation():getClientId()) and not (player:getGroup():getId() >= 2) then
-		player:say(potion.description, TALKTYPE_MONSTER_SAY)
+	if potion.level and player:getLevel() < potion.level or potion.vocations and not table.contains(potion.vocations, player:getVocation():getBaseId()) and not (player:getGroup():getId() >= 2) then
+		player:say(potion.description, MESSAGE_POTION)
 		return true
 	end
 
 	if player:getCondition(CONDITION_EXHAUST_HEAL) then
-		player:sendTextMessage(MESSAGE_STATUS_SMALL, Game.getReturnMessage(RETURNVALUE_YOUAREEXHAUSTED))
+		player:sendTextMessage(MESSAGE_FAILURE, Game.getReturnMessage(RETURNVALUE_YOUAREEXHAUSTED))
 		return true
 	end
 
@@ -246,7 +260,7 @@ function flaskPotion.onUse(player, item, fromPosition, target, toPosition, isHot
 		end
 
 		player:addAchievementProgress('Potion Addict', 100000)
-		target:say("Aaaah...", TALKTYPE_MONSTER_SAY)
+		target:say("Aaaah...", MESSAGE_POTION)
 		player:addItem(potion.flask, 1)
 		player:addCondition(exhaust)
 		player:setStorageValue(38412, player:getStorageValue(38412)+1)
@@ -254,17 +268,28 @@ function flaskPotion.onUse(player, item, fromPosition, target, toPosition, isHot
 
 	-- Delay potion
 	playerDelayPotion[player:getId()] = os.mtime() + 500
+	
+	if potion.func then
+		potion.func(player)
+		if potion.text then
+			player:say(potion.text, MESSAGE_POTION)
+		end
+		player:getPosition():sendMagicEffect(potion.effect)
+	end
 
 	if potion.condition then
 		player:addCondition(potion.condition)
-		player:say(potion.text, TALKTYPE_MONSTER_SAY)
+		player:say(potion.text, MESSAGE_POTION)
 		player:getPosition():sendMagicEffect(potion.effect)
 	end
 
 	if potion.transform then
-		item:transform(potion.transform.id[math.random(#potion.transform.id)])
-		item:getPosition():sendMagicEffect(potion.effect)
-		return true
+		if item:getCount() >= 1 then
+			item:remove(1)
+			player:addItem(potion.transform.id[math.random(#potion.transform.id)], 1)
+			item:getPosition():sendMagicEffect(potion.effect)
+			return true
+		end
 	end
 
 	if not configManager.getBoolean(configKeys.REMOVE_POTION_CHARGES) then

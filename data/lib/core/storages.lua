@@ -93,7 +93,6 @@ Storage = {
 	BloodHerbQuest = 30010,
 	firstMageWeapon = 30011,
 	toOutfoxAFoxQuest = 30012,
-	MadMageQuest = 30013,
 	KawillBlessing = 30014,
 	RentedHorseTimer = 30015,
 	FountainOfLife = 30016,
@@ -135,6 +134,11 @@ Storage = {
 	StoreExaust = 30051,
 	LemonCupcake = 30052,
 	BlueberryCupcake = 30053,
+	PetSummonEvent10 = 30054,
+	PetSummonEvent60 = 30055,
+	FreeQuests = 990000,
+	PremiumAccount = 998899,
+
 	--[[
 	Old storages
 	Over time, this will be dropped and replaced by the table above
@@ -165,47 +169,51 @@ Storage = {
 			Recovering = 50018
 		},
 		Fourth = {
-			Moe = 50019
+			Moe = 50019,
+			MoeTimer = 50020
 		},
 		Fifth = {
-			Memories = 50020
+			Memories = 50021,
+			MemoriesShards = 50022
 		},
 		Sixth = {
-			Favor = 50021
+			Favor = 50023,
+			FourMasks = 50024,
+			BlessedStatues = 50025
 		},
 		Set = {
-			Ritual = 50022
+			Ritual = 50026
 		},
 		Eighth = {
-			Yonan = 50023,
-			Narsai = 50024,
-			Shimun = 50025,
-			Tefrit = 50026
+			Yonan = 50027,
+			Narsai = 50028,
+			Shimun = 50029,
+			Tefrit = 50030
 		},
 		Nine = {
-			Owl = 50027
+			Owl = 50031
 		},
 		Tem = {
-			Bleeds = 50028
+			Bleeds = 50032
 		},
 		Eleven = {
-			Basin = 50029
+			Basin = 50033
 		},
 		Twelve = {
-			Boss = 50030,
-			Bragrumol = 50031,
-			Mozradek = 50032,
-			Xogixath = 50033
+			Boss = 50034,
+			Bragrumol = 50035,
+			Mozradek = 50036,
+			Xogixath = 50037
 		},
 		Thirteen = {
-			Fafnar = 50034,
-			Lyre = 50035,
-			Presente = 50036
+			Fafnar = 50038,
+			Lyre = 50039,
+			Presente = 50040
 		},
 		Fourteen = {
-			Remains = 50037
+			Remains = 50041
 		},
-		UrmahlulluTimer = 50038
+		UrmahlulluTimer = 50042
 	},
 	TheSecretLibrary = {
 		-- Reserved storage from 50050 - 50069
@@ -422,7 +430,8 @@ Storage = {
 		TatteredSwanFeathers02 = 50302,
 		TatteredSwanFeathers03 = 50303,
 		TatteredSwanFeathers04 = 50304,
-		TatteredSwanFeathers05 = 50305
+		TatteredSwanFeathers05 = 50305,
+		PoacherChest = 50306
 	},
 	FirstDragon = {
 		-- Reserved storage from 50350 - 50379
@@ -583,7 +592,10 @@ Storage = {
 		OrcDoor = 50555,
 		ChorurnDoor = 50556,
 		DwacatraDoor = 50557,
-		FamilyBroochDoor = 50558
+		FamilyBroochDoor = 50558,
+		TheElvenPoetry = 50559,
+		SpectralStoneDoor = 50560,
+		IceMusicDoor = 50561
 	},
 	TravellingTrader = {
 		-- Reserved storage from 50600 - 50619
@@ -1186,7 +1198,7 @@ Storage = {
 		Mission02 = 515208,
 		Mission03 = 515209,
 		Mission04 = 51394,
-		Mission05 = 515151,
+		Mission05 = 56395,
 		Mission06 = 51396,
 		Mission07 = 51397,
 		Mission08 = 51398,
@@ -1285,7 +1297,7 @@ Storage = {
 			LastMissionState = 51529
 		},
 	TheCursedCrystal = {
-		Oneeyedjoe = 51530, 
+		Oneeyedjoe = 51530,
 		MedusaOil = 51531,
 		Questline = 51532
 		}
@@ -1359,13 +1371,44 @@ Storage = {
 		CarlosNpcGreetStorage = 51677,
 		CarlosQuestLog = 51678
 	},
+	TheRookieGuard = {
+		--Reserved storage 52360 - 52395
+		Questline = 52360,
+		Mission01 = 52361,
+		Mission02 = 52362,
+		Mission03 = 52363,
+		Mission04 = 52364,
+		Mission05 = 52365,
+		Mission06 = 52366,
+		Mission07 = 52367,
+		Mission08 = 52368,
+		Mission09 = 52369,
+		Mission10 = 52370,
+		Mission11 = 52371,
+		Mission12 = 52372,
+		StonePileTimer = 52373,
+		Catapults = 52374,
+		RatKills = 52375,
+		PoacherCorpse = 52376,
+		LibraryChest = 52377,
+		TrollChests = 52378,
+		TunnelPillars = 52379,
+		Sarcophagus = 52380,
+		AcademyChest = 52381,
+		KraknaknorkChests = 52382,
+		TutorialDelay = 52383,
+		LibraryDoor = 52384,
+		UnholyCryptDoor = 52385,
+		AcademyDoor = 52386,
+		AcademyChestTimer = 52387,
+		WarWolfDenChest = 52388,
+		UnholyCryptChests = 52389,
+		OrcFortressChests = 52390,
+		Level8Warning = 52391
+	},
 	BanutaSecretTunnel = {
 		-- Reserved storage from 51680 - 51689
 		DeeperBanutaShortcut = 51680,
-	},
-	TheAnnihilator = {
-		-- Reserved storage from 51690 - 51699
-		AnnihilatorDone = 51690
 	},
 	DemonOak = {
 		-- Reserved storage from 51700 - 51709
@@ -1666,6 +1709,7 @@ Storage = {
 		HyenaSign = 52299,
 		Time = 52300
 	},
+	
 	GraveDanger = {
 		-- Reserved storage from 52310 - 52339
 		Questline = 52310,
@@ -1690,15 +1734,50 @@ Storage = {
 		Time3 = 52353,
 		Time4 = 52354,
 	},
+	TheOrderOfTheLion = {
+		-- Reserved storage 52360-52395 (TheRookieGuard)
+		-- Reserved storage 52396-52410 (TheOrderOfTheLion)
+		Drume = {
+			Commander = 52396, -- Global
+			TotalLionCommanders = 52397, -- Global
+			TotalUsurperCommanders = 52398, -- Global
+			Timer = 52399
+		},
+	},
 	-- News quest development
 	-- New storages
 	Quest = {
+		Key = {
+			ID0010 = 103,
+			ID3001 = 3001,
+			ID3002 = 3002,
+			ID3003 = 3003,
+			ID3004 = 3004,
+			ID3005 = 3005,
+			ID3006 = 3006,
+			ID3007 = 3007,
+			ID3008 = 3008,
+			ID3012 = 3012,
+			ID3620 = 3620,
+			ID3666 = 3666,
+			ID3702 = 3702,
+			ID3800 = 3800,
+			ID3801 = 3801,
+			ID3802 = 3802,
+			ID3899 = 3899,
+			ID3940 = 3940,
+			ID3980 = 3980,
+			ID4055 = 4055,
+			ID4502 = 4502,
+			ID5010 = 5010,
+			ID6010 = 6010
+		},
 		SimpleChest = {
 			FamilyBrooch = 9000
 		},
 		-- update pre-6.0
 		DeeperFibula = {
-			Key3980 = 10000,
+			-- 10000 EMPTY
 			RewardTowerShield = 10001,
 			RewardWarriorHelmet = 10002,
 			RewardDwarvenRing = 10003,
@@ -1723,9 +1802,7 @@ Storage = {
 		},
 		-- update 6.1
 		EmperorsCookies = {
-			Key3800 = 10013,
-			Key3801 = 10014,
-			Key3802 = 10015,
+			-- 10013/10015 EMPTY
 			RopeReward = 10016,
 		},
 		ExplorerBrooch = {
@@ -1737,7 +1814,7 @@ Storage = {
 			FireSword = 10020
 		},
 		Panpipe = {
-			Key4055 = 10021,
+			-- 10021 EMPTY
 			Reward = 10022
 		},
 		-- update 6.2
@@ -1809,7 +1886,7 @@ Storage = {
 		},
 		-- update 7.1
 		BlackKnight = {
-			Key5010 = 10053,
+			-- 10053 EMPTY
 			CrownArmor = 10054,
 			CrownShield = 10055
 		},
@@ -1868,10 +1945,33 @@ Storage = {
 			Hammer = 10093,
 			GoldCoin = 10094
 		},
-		MadMageRoom = {},
-		SkullOfRatha = {},
-		TheAnnihilator = {},
-		TheParadoxTower = {},
+		MadMageRoom = {
+			QuestLine = 10095,
+			APrisoner = 10096,
+			StarAmulet = 10097,
+			Hat = 10098,
+			StoneSkinAmulet = 10099
+		},
+		SkullOfRatha = {
+			Bag1 = 10100,
+			Bag2 = 10101
+		},
+		TheAnnihilator = {
+			Reward = 10102
+		},
+		TheParadoxTower = {
+			QuestLine = 10103,
+			TheFearedHugo = 10104,
+			FirstParadoxAcess = 10105,
+			FavoriteColour = 10106,
+			Mathemagics = 10107,
+			Reward = {
+				Egg = 10108,
+				Gold = 10109,
+				Talon = 10110,
+				Wand = 10111
+			}
+		},
 		ThePostmanMissions = {},
 		TheWhiteRavenMonastery = {},
 		VoodooDoll = {},
@@ -2101,8 +2201,7 @@ Storage = {
 			MorrisGoblin = 20012,
 			MorrisGoblinCount = 20013,
 			MorrisMinos = 20014,
-			MorrisMinosCount = 20015,
-			Key0010 = 20016
+			MorrisMinosCount = 20015
 		},
 		SanctuaryOfTheLizardGod = {
 			LizardGodTeleport = 20020,
@@ -2157,12 +2256,11 @@ Storage = {
 		-- update 12.20
 		GraveDanger = {},
 		HandOfTheInquisitionOutfits = {},
-		Kilmaresh = {},
+		-- Kilmaresh = {}, done earlier in the file
 		GraveDanger = {},
 		-- update 12.30
 		FeasterOfSouls = {},
-		PoltergeistOutfits = {},
-		Key4502 = 15000
+		PoltergeistOutfits = {}
 	}
 }
 
@@ -2307,7 +2405,9 @@ GlobalStorage = {
 	PrinceDrazzakEventTime = 65010,
 	ScarlettEtzelEventTime = 65011,
 	CobraBastionFlask = 65012,
-	Inquisition = 65013
+	Inquisition = 65013,
+	Yasir = 65014,
+	NightmareIsle = 65015
 }
 
 
@@ -2333,8 +2433,9 @@ table.sort(extraction) -- Sort the table
 if #extraction > 1 then
 	for i = 1, #extraction - 1 do
 		if extraction[i] == extraction[i+1] then
-			print(">> Duplicate storage value found: ".. extraction[i])
-			print(string.format("> Processed in %.4f(s)", os.clock() - benchmark))
+			Spdlog.warn(string.format("Duplicate storage value found: %d",
+				extraction[i]))
+			Spdlog.warn(string.format("Processed in %.4f(s)", os.clock() - benchmark))
 		end
 	end
 end

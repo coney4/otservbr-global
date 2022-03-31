@@ -161,7 +161,8 @@ function Player:onLook(thing, position, distance)
 		description = description .. thing:getDescription(distance)
 		if thing:isMonster() then
 			local master = thing:getMaster()
-			if master and table.contains({'thundergiant','grovebeast','emberwing','skullfrost'}, thing:getName():lower()) then
+			if master and table.contains({'sorcerer familiar','knight familiar','druid familiar','paladin familiar'},
+																						thing:getName():lower()) then
 				description = description..' (Master: ' .. master:getName() .. '). \z
 				It will disappear in ' .. getTimeinWords(master:getStorageValue(Storage.PetSummon) - os.time())
 			end
@@ -196,12 +197,12 @@ function Player:onLook(thing, position, distance)
 			if decayId ~= -1 then
 				description = string.format("%s\nDecays to: %d", description, decayId)
 			end
-			
+
 			local clientId = itemType:getClientId()
 			if clientId then
 				description = string.format("%s\nClient ID: %d", description, clientId)
 			end
-			
+
 		elseif thing:isCreature() then
 			local str = "%s\nHealth: %d / %d"
 			if thing:isPlayer() and thing:getMaxMana() > 0 then
@@ -221,14 +222,14 @@ function Player:onLook(thing, position, distance)
 			end
 		end
 	end
-	self:sendTextMessage(MESSAGE_INFO_DESCR, description)
+	self:sendTextMessage(MESSAGE_LOOK, description)
 end
 
 function Player:onLookInBattleList(creature, distance)
 	local description = "You see " .. creature:getDescription(distance)
 	if creature:isMonster() then
 		local master = creature:getMaster()
-		local summons = {'thundergiant','grovebeast','emberwing','skullfrost'}
+		local summons = {'sorcerer familiar','knight familiar','druid familiar','paladin familiar'}
 		if master and table.contains(summons, creature:getName():lower()) then
 			description = description..' (Master: ' .. master:getName() .. '). \z
 				It will disappear in ' .. getTimeinWords(master:getStorageValue(Storage.PetSummon) - os.time())
@@ -252,11 +253,11 @@ function Player:onLookInBattleList(creature, distance)
 			description = string.format("%s\nIP: %s", description, Game.convertIpToString(creature:getIp()))
 		end
 	end
-	self:sendTextMessage(MESSAGE_INFO_DESCR, description)
+	self:sendTextMessage(MESSAGE_LOOK, description)
 end
 
 function Player:onLookInTrade(partner, item, distance)
-	self:sendTextMessage(MESSAGE_INFO_DESCR, "You see " .. item:getDescription(distance))
+	self:sendTextMessage(MESSAGE_LOOK, "You see " .. item:getDescription(distance))
 end
 
 function Player:onLookInShop(itemType, count)
@@ -334,13 +335,13 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 		return false
 	end
 
-	-- Loot Analyser
-	local t = Tile(fromCylinder:getPosition())
-	local corpse = t:getTopDownItem()
-	if corpse then
-		local itemType = corpse:getType()
-		if itemType:isCorpse() and toPosition.x == CONTAINER_POSITION then
-			self:sendLootStats(item)
+	-- Players cannot throw items on teleports
+	if blockTeleportTrashing and toPosition.x ~= CONTAINER_POSITION then
+		local thing = Tile(toPosition):getItemByType(ITEM_TYPE_TELEPORT)
+		if thing then
+			self:sendCancelMessage(RETURNVALUE_NOTPOSSIBLE)
+			self:getPosition():sendMagicEffect(CONST_ME_POFF)
+			return false
 		end
 	end
 
@@ -430,6 +431,9 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 		local itemType, moveItem = ItemType(item:getId())
 		if bit.band(itemType:getSlotPosition(), SLOTP_TWO_HAND) ~= 0 and toPosition.y == CONST_SLOT_LEFT then
 			moveItem = self:getSlotItem(CONST_SLOT_RIGHT)
+			if moveItem and itemType:getWeaponType() == WEAPON_DISTANCE and ItemType(moveItem:getId()):getWeaponType() == WEAPON_QUIVER then
+				return true
+			end
 		elseif itemType:getWeaponType() == WEAPON_SHIELD and toPosition.y == CONST_SLOT_RIGHT then
 			moveItem = self:getSlotItem(CONST_SLOT_LEFT)
 			if moveItem and bit.band(ItemType(moveItem:getId()):getSlotPosition(), SLOTP_TWO_HAND) == 0 then
@@ -440,7 +444,7 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 		if moveItem then
 			local parent = item:getParent()
 			if parent:getSize() == parent:getCapacity() then
-				self:sendTextMessage(MESSAGE_STATUS_SMALL, Game.getReturnMessage(RETURNVALUE_CONTAINERNOTENOUGHROOM))
+				self:sendTextMessage(MESSAGE_FAILURE, Game.getReturnMessage(RETURNVALUE_CONTAINERNOTENOUGHROOM))
 				return false
 			else
 				return moveItem:moveTo(parent)
@@ -487,16 +491,6 @@ function Player:onMoveItem(item, count, fromPosition, toPosition, fromCylinder, 
 		return false
 	end
 
-	-- Players cannot throw items on teleports
-	if blockTeleportTrashing and toPosition.x ~= CONTAINER_POSITION then
-		local thing = Tile(toPosition):getItemByType(ITEM_TYPE_TELEPORT)
-		if thing then
-			self:sendCancelMessage(RETURNVALUE_NOTPOSSIBLE)
-			self:getPosition():sendMagicEffect(CONST_ME_POFF)
-			return false
-		end
-	end
-
 	if tile and tile:getItemById(370) then -- Trapdoor
 		self:sendCancelMessage(RETURNVALUE_NOTPOSSIBLE)
 		self:getPosition():sendMagicEffect(CONST_ME_POFF)
@@ -514,6 +508,11 @@ function Player:onItemMoved(item, count, fromPosition, toPosition, fromCylinder,
 end
 
 function Player:onMoveCreature(creature, fromPosition, toPosition)
+	local player = creature:getPlayer()
+	if player and onExerciseTraining[player:getId()] and self:getGroup():hasFlag(PlayerFlag_CanPushAllCreatures) == false then
+		self:sendCancelMessage(RETURNVALUE_NOTPOSSIBLE)
+	return false
+	end
 	return true
 end
 
@@ -530,13 +529,13 @@ end
 function Player:onReportRuleViolation(targetName, reportType, reportReason, comment, translation)
 	local name = self:getName()
 	if hasPendingReport(name, targetName, reportType) then
-		self:sendTextMessage(MESSAGE_EVENT_ADVANCE, "Your report is being processed.")
+		self:sendTextMessage(MESSAGE_REPORT, "Your report is being processed.")
 		return
 	end
 
 	local file = io.open(string.format("data/reports/players/%s-%s-%d.txt", name, targetName, reportType), "a")
 	if not file then
-		self:sendTextMessage(MESSAGE_EVENT_ADVANCE,
+		self:sendTextMessage(MESSAGE_REPORT,
 			"There was an error when processing your report, please contact a gamemaster.")
 		return
 	end
@@ -553,7 +552,7 @@ function Player:onReportRuleViolation(targetName, reportType, reportReason, comm
 	end
 	io.write("------------------------------\n")
 	io.close(file)
-	self:sendTextMessage(MESSAGE_EVENT_ADVANCE, string.format("Thank you for reporting %s. Your report \z
+	self:sendTextMessage(MESSAGE_REPORT, string.format("Thank you for reporting %s. Your report \z
 	will be processed by %s team as soon as possible.", targetName, configManager.getString(configKeys.SERVER_NAME)))
 	return
 end
@@ -567,7 +566,7 @@ function Player:onReportBug(message, position, category)
 	local file = io.open("data/reports/bugs/" .. name .. " report.txt", "a")
 
 	if not file then
-		self:sendTextMessage(MESSAGE_EVENT_DEFAULT,
+		self:sendTextMessage(MESSAGE_REPORT,
 			"There was an error when processing your report, please contact a gamemaster.")
 		return true
 	end
@@ -583,7 +582,7 @@ function Player:onReportBug(message, position, category)
 	io.write("Comment: " .. message .. "\n")
 	io.close(file)
 
-	self:sendTextMessage(MESSAGE_EVENT_DEFAULT,
+	self:sendTextMessage(MESSAGE_REPORT,
 		"Your report has been sent to " .. configManager.getString(configKeys.SERVER_NAME) .. ".")
 	return true
 end
@@ -683,7 +682,7 @@ function Player:onGainExperience(source, exp, rawExp)
 	-- Soul regeneration
 	local vocation = self:getVocation()
 	if self:getSoul() < vocation:getMaxSoul() and exp >= self:getLevel() then
-		soulCondition:setParameter(CONDITION_PARAM_SOULTICKS, vocation:getSoulGainTicks() * 1000)
+		soulCondition:setParameter(CONDITION_PARAM_SOULTICKS, vocation:getSoulGainTicks())
 		self:addCondition(soulCondition)
 	end
 
@@ -726,7 +725,7 @@ function Player:onGainExperience(source, exp, rawExp)
 	if configManager.getBoolean(configKeys.STAMINA_SYSTEM) then
 		useStamina(self)
 		local staminaMinutes = self:getStamina()
-		if staminaMinutes > 2400 and self:isPremium() then
+		if staminaMinutes > 2340 and self:isPremium() then
 			exp = exp * 1.5
 			self:setStaminaXpBoost(150)
 		elseif staminaMinutes <= 840 then
@@ -736,9 +735,9 @@ function Player:onGainExperience(source, exp, rawExp)
 			self:setStaminaXpBoost(100)
 		end
 	end
-			
+
 	-- Boosted creature
-	if source:getName():lower() == BoostedCreature.name:lower() then
+	if source:getName():lower() == (Game.getBoostedCreature()):lower() then
 		exp = exp * 2
 	end
 
@@ -755,6 +754,10 @@ function Player:onLoseExperience(exp)
 end
 
 function Player:onGainSkillTries(skill, tries)
+	-- Dawnport skills limit
+	if isSkillGrowthLimited(self, skill) then
+		return 0
+	end
 	if APPLY_SKILL_MULTIPLIER == false then
 		return tries
 	end
@@ -768,10 +771,10 @@ function Player:onGainSkillTries(skill, tries)
 	local magicRate = configManager.getNumber(configKeys.RATE_MAGIC)
 
 	if(skill == SKILL_MAGLEVEL) then -- Magic getLevel
-		return tries * getRateFromTable(magicLevelStages, self:getMagicLevel(), magicRate)
+		return tries * getRateFromTable(magicLevelStages, self:getBaseMagicLevel(), magicRate)
 	end
 
-	return tries * getRateFromTable(skillsStages, self:getEffectiveSkillLevel(skill), skillRate)
+	return tries * getRateFromTable(skillsStages, self:getSkillLevel(skill), skillRate)
 end
 
 function Player:onRemoveCount(item)
@@ -827,16 +830,16 @@ end
 
 function Player:onApplyImbuement(imbuement, item, slot, protectionCharm)
 	for slot = CONST_SLOT_HEAD, CONST_SLOT_AMMO do
-    	local slotItem = self:getSlotItem(slot)
-   		if slotItem and slotItem == item then
-			self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ROLL_FAILED, "You can't imbue a equipped item.")
-			self:closeImbuementWindow()
-            return true
-   		end
+			local slotItem = self:getSlotItem(slot)
+			if slotItem and slotItem == item then
+				self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ROLL_FAILED, "You can't imbue a equipped item.")
+				self:closeImbuementWindow()
+				return true
+			end
 	end
 
 	for _, pid in pairs(imbuement:getItems()) do
-		if self:getItemCount(pid.itemid) < pid.count then
+		if (self:getItemCount(pid.itemid) + self:getStashItemCount(pid.itemid)) < pid.count then
 			self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ROLL_FAILED, "You don't have all necessary items.")
 			return false
 		end
@@ -866,9 +869,22 @@ function Player:onApplyImbuement(imbuement, item, slot, protectionCharm)
 
 	-- Removing items
 	for _, pid in pairs(imbuement:getItems()) do
-		if not self:removeItem(pid.itemid, pid.count) then
-			self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ROLL_FAILED, "You don't have all necessary items.")
-			return false
+		local invertoryItemCount = self:getItemCount(pid.itemid)
+		if invertoryItemCount >= pid.count then
+			if not(self:removeItem(pid.itemid, pid.count)) then
+				self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ERROR, "An error ocurred, please reopen imbuement window.")
+				return false
+			end
+		else
+			local mathItemCount = pid.count
+			if invertoryItemCount > 0 and self:removeItem(pid.itemid, invertoryItemCount) then
+				mathItemCount = mathItemCount - invertoryItemCount
+			end
+
+			if not(self:removeStashItem(pid.itemid, mathItemCount)) then
+				self:sendImbuementResult(MESSAGEDIALOG_IMBUEMENT_ERROR, "An error ocurred, please reopen imbuement window.")
+				return false
+			end
 		end
 	end
 
@@ -936,6 +952,14 @@ function Player:onCombat(target, item, primaryDamage, primaryType, secondaryDama
 		return primaryDamage, primaryType, secondaryDamage, secondaryType
 	end
 
+	if ItemType(item:getId()):getWeaponType() == WEAPON_AMMO then
+		if isInArray({ITEM_OLD_DIAMOND_ARROW, ITEM_DIAMOND_ARROW}, item:getId()) then
+			return primaryDamage, primaryType, secondaryDamage, secondaryType
+		else
+			item = self:getSlotItem(CONST_SLOT_LEFT)
+		end
+	end
+
 	local slots = ItemType(item:getId()):getImbuingSlots()
 	if slots > 0 then
 		for i = 0, slots - 1 do
@@ -956,4 +980,40 @@ function Player:onCombat(target, item, primaryDamage, primaryType, secondaryDama
 	end
 
 	return primaryDamage, primaryType, secondaryDamage, secondaryType
+end
+
+function Player:onChangeZone(zone)
+	if self:isPremium() then
+		local event = staminaBonus.eventsPz[self:getId()]
+
+		if configManager.getBoolean(configKeys.STAMINA_PZ) then
+			if zone == ZONE_PROTECTION then
+				if self:getStamina() < 2520 then
+					if not event then
+						local delay = configManager.getNumber(configKeys.STAMINA_ORANGE_DELAY)
+						if self:getStamina() > 2400 and self:getStamina() <= 2520 then
+							delay = configManager.getNumber(configKeys.STAMINA_GREEN_DELAY)
+						end
+
+						self:sendTextMessage(MESSAGE_STATUS,
+                                             string.format("In protection zone. \
+                                                           Every %i minutes, gain %i stamina.",
+                                                           delay, configManager.getNumber(configKeys.STAMINA_PZ_GAIN)
+                                             )
+                        )
+						staminaBonus.eventsPz[self:getId()] = addEvent(addStamina, delay * 60 * 1000, nil, self:getId(), delay * 60 * 1000)
+					end
+				end
+			else
+				if event then
+					self:sendTextMessage(MESSAGE_STATUS, "You are no longer refilling stamina, \z
+                                         since you left a regeneration zone.")
+					stopEvent(event)
+					staminaBonus.eventsPz[self:getId()] = nil
+				end
+			end
+			return not configManager.getBoolean(configKeys.STAMINA_PZ)
+		end
+	end
+	return false
 end
